@@ -10,6 +10,9 @@
           </h1>
           <p class="page-subtitle">Manage and view user profiles with advanced search and filtering</p>
         </div>
+
+        
+
         
         <div class="header-actions">
           <ViewToggle v-model="viewMode" />
@@ -37,6 +40,15 @@
         </div>
       </div>
     </div>
+    <SearchBar 
+      v-model="searchQuery" 
+      :users="users"
+      :fields="searchFields"
+      @update:fields="searchFields = $event"
+      @filter-change="handleFilterChange"
+      @clear="clearSearch"
+      @quick-filter="handleQuickFilter"
+    />
 
     <div v-if="loading && !users.length" class="loading-container">
       <el-skeleton :rows="6" animated />
@@ -153,26 +165,28 @@
     </el-dialog>
 
     <el-backtop :right="40" :bottom="40" />
+    
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { 
-  UserFilled, 
+  UserFilled,
   Refresh, 
   Edit, 
   Delete, 
   WarningFilled,
   Plus,
 } from '@element-plus/icons-vue';
-import { ElMessage, ElNotification, type DialogTransition } from 'element-plus';
+import { ElMessage, ElNotification, type DialogTransition, type Filter } from 'element-plus';
 import { useUsers } from '@/composables/useUsers';
 import { useSearch } from '@/composables/useSearch';
 import type { User } from '@/types/user';
 import type { ViewMode } from '@/types/api';
 import { useLifecycleLogger } from '@/composables/useLifecycleLogger';
 import ViewToggle from '@/components/Layout/ViewToggle.vue';
+import SearchBar from '@/components/UserProfile/SearchBar.vue';
 
 
 // Components
@@ -199,7 +213,10 @@ const {
 } = useUsers();
 
 const {
+  searchQuery,
+  searchFields,
   filteredUsers,
+  clearSearch,
 } = useSearch(users);
 
 const viewMode = ref<ViewMode>('grid');
@@ -320,6 +337,14 @@ const confirmDelete = async () => {
       });
     }
   }
+};
+
+const handleFilterChange = (filters: Filter<User>[]) => {
+  console.log('Filters changed:', filters);
+};
+
+const handleQuickFilter = (filter: string) => {
+  console.log('Quick filter selected:', filter);
 };
 
 // Initialize data on mount
