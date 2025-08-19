@@ -62,6 +62,34 @@
                 <el-empty description="User not found" />
               </div>
 
+              <el-divider content-position="left">Comments</el-divider>
+              <div class="comments-loading" v-if="commentsLoading">
+                <el-skeleton :rows="3" animated />
+              </div>
+              <div v-else>
+                <el-empty v-if="comments.length === 0" description="No comments for this user" />
+                <el-timeline v-else>
+                  <el-timeline-item
+                    v-for="c in comments"
+                    :key="c.id"
+                    :timestamp="c.createdAt ? new Date(c.createdAt).toLocaleString() : ''"
+                    placement="top"
+                  >
+                    <el-card shadow="hover">
+                      <template #header>
+                        <div
+                          style="display: flex; justify-content: space-between; align-items: center"
+                        >
+                          <strong>{{ c.name }}</strong>
+                          <el-tag size="small" type="info">{{ c.email }}</el-tag>
+                        </div>
+                      </template>
+                      <div>{{ c.body }}</div>
+                    </el-card>
+                  </el-timeline-item>
+                </el-timeline>
+              </div>
+
               <template #footer>
                 <div class="card-footer">
                   <el-button type="warning" @click="handleEditForm" :loading="loading">
@@ -100,6 +128,8 @@ import type { User } from '@/types/user.types'
 import { useLifecycleLogger } from '@/composables/useLifecycleLogger'
 import { useUserStore } from '@/stores/userStore'
 import { UserService } from '@/services/userService'
+import { CommentService } from '@/services/commentService'
+import type { Comment } from '@/types/comment.type'
 import UserForm from '@/components/newComponent/UserForm.vue'
 import { ElNotification } from 'element-plus'
 
@@ -115,6 +145,8 @@ const editFormVisible = ref(false)
 const editingUser = ref<User | null>(null)
 const user = ref<User | null>(null)
 const loading = ref(false)
+const comments = ref<Comment[]>([])
+const commentsLoading = ref(false)
 
 const handleEditForm = () => {
   editingUser.value = user.value
@@ -158,7 +190,19 @@ const handleCancel = () => {
   editingUser.value = null
 }
 
-// Fetch user data using UserService
+const fetchCommentsForUser = async (userId: number) => {
+  try {
+    commentsLoading.value = true
+    const data = await CommentService.getComments({ userId, limit: 5 })
+    comments.value = data
+  } catch (error) {
+    console.error('Error fetching comments:', error)
+  } finally {
+    commentsLoading.value = false
+  }
+}
+
+// Fetch user
 const fetchUser = async (userId: string) => {
   try {
     loading.value = true
@@ -188,6 +232,8 @@ onMounted(async () => {
 
       if (!user.value) {
         console.error('No user data received')
+      } else {
+        await fetchCommentsForUser(Number(id.value))
       }
     } catch (error) {
       console.error('Error in UserProfileView onMounted:', error)
