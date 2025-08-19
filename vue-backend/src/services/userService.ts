@@ -4,8 +4,7 @@ import { CreateUserData, UpdateUserData, UserQuery } from "../types/user";
 const prisma = new PrismaClient();
 
 export const getAllUsers = async (query: UserQuery = {}) => {
-  const { search, page = 1, limit = 10 } = query;
-  const skip = (page - 1) * limit;
+  const { search } = query;
 
   const where = search
     ? {
@@ -17,35 +16,22 @@ export const getAllUsers = async (query: UserQuery = {}) => {
       }
     : {};
 
-  const [users, total] = await Promise.all([
-    prisma.user.findMany({
-      where,
-      skip,
-      take: limit,
-      include: {
-        address: {
-          include: {
-            geo: true,
-          },
+  const users = await prisma.user.findMany({
+    where,
+    include: {
+      address: {
+        include: {
+          geo: true,
         },
-        company: true,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-    }),
-    prisma.user.count({ where }),
-  ]);
-
-  return {
-    users,
-    pagination: {
-      total,
-      page,
-      limit,
-      pages: Math.ceil(total / limit),
+      company: true,
     },
-  };
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return users;
 };
 
 export const getUserById = async (id: number) => {

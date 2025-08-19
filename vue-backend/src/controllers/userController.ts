@@ -20,12 +20,12 @@ export const getUsers = async (
       limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
     };
 
-    const result = await getAllUsers(query);
+    const users = await getAllUsers(query);
+    console.log("🔄 Result:", users);
 
     res.json({
       success: true,
-      data: result.users,
-      pagination: result.pagination,
+      data: users,
       message: "Users fetched successfully",
     });
   } catch (error) {
