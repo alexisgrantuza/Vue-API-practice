@@ -92,3 +92,29 @@ export interface JsonPlaceholderUser {
     bs: string;
   };
 }
+
+export interface JsonPlaceholderComment {
+  postId: number;
+  id: number;
+  name: string;
+  email: string;
+  body: string;
+}
+
+export interface CreateCommentData {
+  postId: number;
+  name: string;
+  email: string;
+  body: string;
+  userId?: number | null;
+}
+
+export interface UpdateCommentData extends Partial<CreateCommentData> {}
+
+export interface CommentQuery {
+  search?: string;
+  postId?: number;
+  userId?: number;
+  page?: number;
+  limit?: number;
+}

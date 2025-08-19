@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import userRoutes from "./routes/userRoutes";
+import commentRoutes from "./routes/commentRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 
 // Load environment variables
@@ -16,6 +17,7 @@ app.use(express.json());
 
 // API routes
 app.use("/api/users", userRoutes);
+app.use("/api/comments", commentRoutes);
 
 // 404 handler - Fixed for Express 5.x
 app.use((req, res) => {
@@ -32,7 +34,9 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`📊 API endpoint: http://localhost:${PORT}/api/users`);
+  console.log(`📊 API endpoints:`);
+  console.log(`   • http://localhost:${PORT}/api/users`);
+  console.log(`   • http://localhost:${PORT}/api/comments`);
 });
 
 export default app;

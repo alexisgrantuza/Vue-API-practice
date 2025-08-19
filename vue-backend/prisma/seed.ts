@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import axios from "axios";
-import { JsonPlaceholderUser } from "../src/types/user";
+import { JsonPlaceholderUser, JsonPlaceholderComment } from "../src/types/user";
 
 const prisma = new PrismaClient();
 
@@ -86,9 +86,60 @@ async function seedUsers() {
   }
 }
 
+async function fetchCommentFromJsonPlaceholder(): Promise<
+  JsonPlaceholderComment[]
+> {
+  try {
+    const response = await axios.get<JsonPlaceholderComment[]>(
+      "https://jsonplaceholder.typicode.com/comments"
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch comments from JSONPlaceholder:", error);
+    throw error;
+  }
+}
+
+async function seedComment() {
+  console.log("🌱 Starting comments seed...");
+
+  try {
+    console.log("🧹 Clearing existing comments...");
+    await prisma.comment.deleteMany();
+
+    console.log("📥 Fetching comments from JSONPlaceholder...");
+    const comments = await fetchCommentFromJsonPlaceholder();
+
+    // Fetch existing user ids to optionally link comments to users
+    const users = await prisma.user.findMany({ select: { id: true } });
+    const userIds = users.map((u) => u.id);
+
+    console.log(`📊 Found ${comments.length} comments to seed`);
+
+    const data = comments.map((c) => ({
+      postId: c.postId,
+      name: c.name,
+      email: c.email,
+      body: c.body,
+      // Optionally associate to a random existing user
+      userId:
+        userIds.length > 0
+          ? userIds[Math.floor(Math.random() * userIds.length)]
+          : null,
+    }));
+
+    const result = await prisma.comment.createMany({ data });
+    console.log(`✅ Created ${result.count} comments`);
+  } catch (error) {
+    console.error("❌ Error seeding comments:", error);
+    throw error;
+  }
+}
+
 async function main() {
   try {
     await seedUsers();
+    await seedComment();
   } catch (error) {
     console.error("Seed failed:", error);
     process.exit(1);
